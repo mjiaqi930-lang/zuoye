@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>广西三月三英语作业</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            --app-bg: rgba(255, 255, 255, 0.65);
+            --note-color-start: #e0c3fc;
+            --note-color-end: #8ec5fc;
+            --note-font-size: 16px;
+            --text-color: #2c3e50;
+            --nav-color: #6c8cbf;
+            --card-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1), 0 8px 16px -4px rgba(0, 0, 0, 0.06);
+            --bubble-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "PingFang SC", "Inter", -apple-system, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            max-height: 820px;
+            background: var(--app-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            position: relative;
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 40px;
+        }
+
+        .view {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 20px 100px;
+            animation: slideFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            scrollbar-width: none;
+        }
+        .view::-webkit-scrollbar { display: none; }
+        .view.active { display: block; }
+
+        @keyframes slideFadeIn {
+            0% { opacity: 0; transform: scale(0.98) translateY(10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* ---------- 主页头部 ---------- */
+        .home-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0 20px;
+        }
+        .greeting h1 {
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: #1e3a5f;
+            line-height: 1.2;
+        }
+        .greeting p {
+            font-size: 0.95rem;
+            color: #7f8c8d;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        .date-badge {
+            background: linear-gradient(135deg, #ffffff, #f0f2f5);
+            padding: 12px 16px;
+            border-radius: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.06), inset 0 2px 4px rgba(255,255,255,1);
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        .date-badge .day { font-size: 1.5rem; font-weight: 800; color: #2c3e50; line-height: 1; }
+        .date-badge .month { font-size: 0.8rem; color: #95a5a6; margin-top: 2px; font-weight: 600; }
+
+        /* ---------- 纯 CSS 加菲猫画布区 ---------- */
+        .garfield-section {
+            margin: 10px 0 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        
+        /* 气泡文字样式 */
+        .speech-bubble {
+            background: var(--bubble-bg);
+            backdrop-filter: blur(12px);
+            border-radius: 24px 24px 24px 8px;
+            padding: 10px 18px;
+            font-size: 0.95rem;
+            color: #d35400;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            margin-bottom: 12px;
+            opacity: 0;
+            transform: translateY(10px) scale(0.9);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,1);
+            text-align: center;
+            cursor: pointer;
+        }
+        .speech-bubble.show { opacity: 1; transform: translateY(0) scale(1); }
+
+        /* 加菲猫画板容器 */
+        .garfield-art-container {
+            position: relative;
+            max-width: 100%;
+        }
+
+        /* 视网膜模式复选框（左上角） */
+        .retina-toggle {
+            position: absolute;
+            top: 8px;   /* 坐标：距顶部 8 像素 */
+            left: 8px;  /* 坐标：距左侧 8 像素 */
+            z-index: 20;
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+        }
+
+        /* 画板本体：深蓝背景 + 紫色边框 */
+        .garfield-canvas {
+            width: 160px;   /* 宽：160 像素 */
+            height: 160px;  /* 高：160 像素 */
+            background-color: #0f172a; /* 深蓝色 */
+            border: 4px solid #8b5cf6; /* 紫色方框 */
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), margin 0.4s;
+            transform-origin: top center;
+        }
+
+        /* 触发视网膜模式 (放大两倍) */
+        .retina-toggle:checked ~ .garfield-canvas {
+            transform: scale(2);
+            margin-bottom: 160px; /* 撑开底部空间，避免遮挡内容 */
+        }
+        
+        /* 响应式适配：小屏幕尺寸自动缩小倍率，避免溢出 */
+        @media (max-width: 360px) {
+            .retina-toggle:checked ~ .garfield-canvas {
+                transform: scale(1.6);
+                margin-bottom: 100px;
+            }
+        }
+
+        /* 1. 脸部基底 (黄色) */
+        .g-face {
+            position: absolute;
+            width: 100px;   /* 脸宽 100px */
+            height: 80px;   /* 脸高 80px */
+            background: #fbbf24; /* 黄色 */
+            /* X坐标计算: (160 - 100宽) / 2 = 30px */
+            left: 30px;     
+            /* Y坐标计算: 偏上方一点放置 = 44px */
+            top: 44px;      
+            border-radius: 50px / 40px; /* 椭圆脸型 */
+            z-index: 5;
+            box-shadow: inset -4px -6px 0 rgba(217, 119, 6, 0.2);
+        }
+
+        /* 2. 耳朵 (CSS三角形) */
+        .g-ear {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 14px solid transparent;  
+            border-right: 14px solid transparent; 
+            border-bottom: 30px solid #fbbf24; /* 高度 30px */
+            z-index: 4;
+            /* Y坐标计算: 脸部上方 = 18px */
+            top: 18px; 
+        }
+        .g-ear.left {
+            /* X坐标计算: 左侧偏移 32px */
+            left: 32px;
+            transform: rotate(-20deg);
+        }
+        .g-ear.right {
+            /* X坐标计算: 右侧偏移 32px */
+            right: 32px;
+            transform: rotate(20deg);
+        }
+
+        /* 3. 眼睛 (白色椭圆) */
+        .g-eye {
+            position: absolute;
+            width: 24px;   /* 眼宽 24px */
+            height: 32px;  /* 眼高 32px */
+            background: #ffffff;
+            border: 2px solid #000000;
+            border-radius: 12px / 16px;
+            /* Y坐标计算: 脸部内部偏移 = 12px */
+            top: 12px;
+            z-index: 6;
+            overflow: hidden;
+            /* 5秒自动眨眼动画 */
+            animation: blink 5s infinite;
+            transform-origin: center;
+        }
+        .g-eye.left { left: 22px; }  /* 左眼距离脸部左沿 22px */
+        .g-eye.right { right: 22px; }/* 右眼距离脸部右沿 22px */
+
+        /* 眨眼动画关键帧 (95% 的时间保持睁眼，瞬间闭合) */
+        @keyframes blink {
+            0%, 92%, 98%, 100% { transform: scaleY(1); }
+            95% { transform: scaleY(0.1); }
+        }
+
+        /* 4. 瞳孔 */
+        .g-pupil {
+            position: absolute;
+            width: 10px;   /* 瞳孔宽高 10px */
+            height: 10px;
+            background: #000000;
+            border-radius: 50%;
+            /* 瞳孔定位在眼睛内部底端 */
+            bottom: 4px;
+            left: 5px;
+        }
+
+        /* 5. 鼻子 */
+        .g-nose {
+            position: absolute;
+            width: 14px;   /* 鼻宽 14px */
+            height: 8px;   /* 鼻高 8px */
+            background: #ef4444; /* 粉红/红色 */
+            border-radius: 7px / 4px;
+            /* X坐标计算: (100宽 - 14) / 2 = 43px */
+            left: 43px;    
+            /* Y坐标计算: 眼睛下方 = 50px */
+            top: 50px;     
+            border: 1px solid #000;
+            z-index: 7;
+        }
+
+        /* 6. 黑胡须 (严格在黄色脸上可见) */
+        .g-whisker {
+            position: absolute;
+            width: 28px;   /* 胡须长 28px */
+            height: 2px;   /* 胡须粗 2px */
+            background: #000000; /* 纯黑 */
+            z-index: 7;
+        }
+        /* 左侧胡须：伸出脸部边界 */
+        .g-whisker.left.w1 { top: 46px; left: -14px; transform: rotate(8deg); }
+        .g-whisker.left.w2 { top: 56px; left: -12px; transform: rotate(-5deg); }
+        /* 右侧胡须：伸出脸部边界 */
+        .g-whisker.right.w1 { top: 46px; right: -14px; transform: rotate(-8deg); }
+        .g-whisker.right.w2 { top: 56px; right: -12px; transform: rotate(5deg); }
+
+
+        /* ---------- 便签与其他组件 ---------- */
+        .float-container {
+            animation: softFloat 6s ease-in-out infinite;
+        }
+        @keyframes softFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .note-wrapper {
+            position: relative;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 350px;
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+        .note-wrapper:active { transform: scale(0.97); }
+
+        .sticky-note {
+            background: linear-gradient(145deg, var(--note-color-start), var(--note-color-end));
+            padding: 32px 24px 24px;
+            border-radius: 8px 24px 8px 24px;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            font-size: var(--note-font-size);
+            color: var(--text-color);
+            min-height: 240px;
+            border: 1px solid rgba(255,255,255,0.4);
+            transition: all 0.3s;
+        }
+
+        .note-fold {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border-width: 0 0 40px 40px;
+            border-style: solid;
+            border-color: transparent transparent rgba(0,0,0,0.08) rgba(255,255,255,0.2);
+            border-radius: 0 0 8px 0;
+            box-shadow: -4px -4px 10px rgba(0,0,0,0.05);
+        }
+
+        .tape {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-3deg);
+            width: 110px;
+            height: 34px;
+            background: linear-gradient(to right, rgba(255,255,255,0.4), rgba(255,255,255,0.8), rgba(255,255,255,0.4));
+            backdrop-filter: blur(6px);
+            z-index: 2;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            clip-path: polygon(4% 0, 96% 2%, 100% 100%, 0 98%);
+        }
+
+        .badge-current {
+            position: absolute;
+            top: 20px;
+            right: -10px;
+            background: #ff6b6b;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 6px 18px;
+            border-radius: 20px 0 0 20px;
+            z-index: 3;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+        }
+
+        .subject-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.5);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #1e3a5f;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .note-title {
+            font-weight: 800;
+            font-size: 1.3em;
+            margin-bottom: 16px;
+            border-bottom: 2px dashed rgba(255,255,255,0.6);
+            padding-bottom: 12px;
+        }
+
+        .note-content {
+            margin-bottom: 16px;
+            line-height: 1.6;
+            font-weight: 600;
+            background: rgba(255,255,255,0.3);
+            padding: 14px 18px;
+            border-radius: 16px;
+        }
+
+        .note-requirements {
+            font-size: 0.9em;
+            background: rgba(255,255,255,0.6);
+            padding: 14px 18px;
+            border-radius: 16px;
+            color: #c0392b;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .countdown-chip {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 12px;
+        }
+        .countdown-badge {
+            background: #1e3a5f;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            box-shadow: 0 4px 10px rgba(30, 58, 95, 0.3);
+        }
+
+        /* 底部导航栏：无表情，仅文字 */
+        .bottom-nav {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,1);
+            z-index: 10;
+            border-radius: 30px;
+            padding: 0 10px;
+        }
+        .nav-item { 
+            color: #7f8c8d; 
+            text-align: center; 
+            font-size: 0.95rem; 
+            cursor: pointer; 
+            padding: 8px 24px; 
+            border-radius: 20px; 
+            transition: all 0.3s; 
+            font-weight: 700;
+        }
+        .nav-item.active { 
+            background: #1e3a5f; 
+            color: #ffffff; 
+            box-shadow: 0 6px 16px rgba(30, 58, 95, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* 设置面板 */
+        .settings-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+            border: 1px solid rgba(255,255,255,1);
+        }
+        .settings-title { 
+            font-size: 1.1rem; 
+            color: #2c3e50; 
+            margin-bottom: 20px; 
+            font-weight: 800;
+        }
+        input[type=range] { 
+            flex: 1; margin: 0 15px; -webkit-appearance: none; 
+            background: #dfe6e9; height: 8px; border-radius: 10px; 
+        }
+        input[type=range]::-webkit-slider-thumb { 
+            -webkit-appearance: none; width: 24px; height: 24px; 
+            background: #1e3a5f; border-radius: 50%; cursor: pointer; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2); border: 3px solid white;
+        }
+        
+        .color-picker { display: flex; gap: 14px; flex-wrap: wrap; }
+        .color-btn { 
+            width: 48px; height: 48px; border-radius: 50%; border: 3px solid transparent; 
+            cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .color-btn.active { 
+            transform: scale(1.15); border: 3px solid white; 
+            box-shadow: 0 0 0 3px #1e3a5f, 0 8px 18px rgba(0,0,0,0.15); 
+        }
+
+        /* 模态框 */
+        .modal-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.show { display: flex; opacity: 1; }
+        .modal-overlay .note-wrapper { transform: scale(0.8) translateY(20px); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .modal-overlay.show .note-wrapper { transform: scale(1.05) translateY(0); }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <div id="view-home" class="view active">
+        <div class="home-header">
+            <div class="greeting">
+                <h1>英语作业</h1>
+                <p>轻松搞定每一天</p>
+            </div>
+            <div class="date-badge" id="todayDateDisplay">
+                <div class="day" id="todayDay">17</div>
+                <div class="month" id="todayMonth">4月</div>
+            </div>
+        </div>
+        
+        <div class="garfield-section">
+            <div class="speech-bubble" id="garfield-bubble" onclick="interactWithGarfield()">今天作业写了吗？</div>
+            
+            <div class="garfield-art-container">
+                <input type="checkbox" id="retina-toggle" class="retina-toggle" title="切换视网膜模式">
+                
+                <div class="garfield-canvas">
+                    <div class="g-face">
+                        <div class="g-eye left"><div class="g-pupil"></div></div>
+                        <div class="g-eye right"><div class="g-pupil"></div></div>
+                        <div class="g-nose"></div>
+                        <div class="g-whisker left w1"></div>
+                        <div class="g-whisker left w2"></div>
+                        <div class="g-whisker right w1"></div>
+                        <div class="g-whisker right w2"></div>
+                    </div>
+                    <div class="g-ear left"></div>
+                    <div class="g-ear right"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="float-container">
+            <div class="note-wrapper" onclick="openModal('note-current')">
+                <div class="badge-current">当前进度</div>
+                <div class="tape"></div>
+                <div class="sticky-note" id="note-current">
+                    <span class="subject-tag">英语 · 假期任务</span>
+                    <div class="note-title">4.17 ~ 4.20</div>
+                    <div class="note-content">1套段考题<br>抄写第五单元单词</div>
+                    <div class="note-requirements">
+                        要求：除人名和地点，没有加黑的单词或短语也要抄写，每个一行。
+                    </div>
+                    <div class="countdown-chip">
+                        <span class="countdown-badge" id="countdownDisplay">计算中...</span>
+                    </div>
+                </div>
+                <div class="note-fold"></div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 24px; text-align: center; font-size: 0.85rem; color: #7f8c8d; font-weight: 500;">
+            点击便签可以放大查看 
+        </div>
+    </div>
+
+    <div id="view-history" class="view">
+        <div class="home-header" style="padding-bottom: 30px;">
+            <div class="greeting">
+                <h1>历史作业</h1>
+                <p>过去的努力都算数</p>
+            </div>
+        </div>
+        
+        <div class="history-list float-container" style="animation-delay: -2s;">
+            <div class="note-wrapper" onclick="openModal('note-history-1')">
+                <div class="tape"></div>
+                <div class="sticky-note" id="note-history-1" style="background: linear-gradient(145deg, #a29bfe, #6c5ce7); color: white;">
+                    <div style="background: rgba(255,255,255,0.2); display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; margin-bottom: 12px; backdrop-filter: blur(4px);">2026-04-11</div>
+                    <div class="note-title" style="border-bottom-color: rgba(255,255,255,0.3);">周末英语练习</div>
+                    <div class="note-content" style="background: rgba(255,255,255,0.15);">同步训练配套试卷第4单元A卷</div>
+                    <div class="note-requirements" style="color: #fff; background: rgba(0,0,0,0.15); border: none;">
+                        要求：阅读和7选5答案写在302页，语法填空下面空白处。
+                    </div>
+                </div>
+                <div class="note-fold" style="border-right-color: rgba(0,0,0,0.2);"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-settings" class="view">
+        <div class="home-header" style="padding-bottom: 20px;">
+            <div class="greeting">
+                <h1>个性化</h1>
+                <p>定制你的专属空间</p>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-title">字体大小</div>
+            <div class="slider-container" style="display: flex; align-items: center;">
+                <span style="font-weight: 600; color: #7f8c8d;">A</span>
+                <input type="range" id="font-slider" min="14" max="22" value="16">
+                <span id="font-value" style="font-weight: 800; color: #1e3a5f; width: 24px; text-align: right;">16</span>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-title">专属便签配色</div>
+            <div class="color-picker">
+                <div class="color-btn active" style="background: linear-gradient(145deg, #e0c3fc, #8ec5fc);" onclick="setTheme(this, '#e0c3fc', '#8ec5fc', '#2c3e50')"></div>
+                <div class="color-btn" style="background: linear-gradient(145deg, #84fab0, #8fd3f4);" onclick="setTheme(this, '#84fab0', '#8fd3f4', '#1a2e2e')"></div>
+                <div class="color-btn" style="background: linear-gradient(145deg, #a18cd1, #fbc2eb);" onclick="setTheme(this, '#a18cd1', '#fbc2eb', '#ffffff')"></div>
+                <div class="color-btn" style="background: linear-gradient(145deg, #ff9a9e, #fecfef);" onclick="setTheme(this, '#ff9a9e', '#fecfef', '#2d1e1e')"></div>
+                <div class="color-btn" style="background: linear-gradient(145deg, #f6d365, #fda085);" onclick="setTheme(this, '#f6d365', '#fda085', '#2e2b1f')"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchView('home', this)">主页</div>
+        <div class="nav-item" onclick="switchView('history', this)">历史</div>
+        <div class="nav-item" onclick="switchView('settings', this)">设置</div>
+    </div>
+
+    <div class="modal-overlay" id="modal" onclick="closeModal()">
+        <div class="note-wrapper" id="modal-content" onclick="event.stopPropagation()"></div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // 日期显示
+        function updateDateDisplay() {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = (now.getMonth() + 1) + '月';
+            document.getElementById('todayDay').innerText = day;
+            document.getElementById('todayMonth').innerText = month;
+        }
+        updateDateDisplay();
+
+        // 倒计时计算逻辑保留，并移除表情符号
+        function updateCountdown() {
+            const countdownSpan = document.getElementById('countdownDisplay');
+            if (!countdownSpan) return;
+            try {
+                const titleEl = document.querySelector('#note-current .note-title');
+                let titleText = titleEl ? titleEl.innerText : '';
+                const match = titleText.match(/(\d{1,2})\.(\d{1,2})\s*~\s*(\d{1,2})\.(\d{1,2})/);
+                if (match) {
+                    const endMonth = parseInt(match[3], 10);
+                    const endDay = parseInt(match[4], 10);
+                    const currentYear = new Date().getFullYear();
+                    const dueDate = new Date(currentYear, endMonth - 1, endDay);
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+                    dueDate.setHours(0,0,0,0);
+                    const diffTime = dueDate - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays > 0) {
+                        countdownSpan.innerHTML = `剩余 ${diffDays} 天`;
+                    } else if (diffDays === 0) {
+                        countdownSpan.innerHTML = `今天截止！`;
+                    } else {
+                        countdownSpan.innerHTML = `已过期`;
+                    }
+                } else {
+                    countdownSpan.innerHTML = `剩余 3 天`;
+                }
+            } catch(e) {
+                countdownSpan.innerHTML = `剩余 3 天`;
+            }
+        }
+        updateCountdown();
+
+        // 纯净版语录互动（移除表情）
+        const garfieldQuotes = [
+            "我要吃千层面！", "讨厌星期一...", "别吵，本喵在睡觉",
+            "快去写作业！", "英语作业？喵都不想写", "给我披萨就帮你",
+            "主人今天真好看", "快看看倒计时！"
+        ];
+        let bubbleTimeout;
+
+        window.interactWithGarfield = function() {
+            const bubble = document.getElementById('garfield-bubble');
+            bubble.textContent = garfieldQuotes[Math.floor(Math.random() * garfieldQuotes.length)];
+            bubble.classList.add('show');
+            clearTimeout(bubbleTimeout);
+            bubbleTimeout = setTimeout(() => {
+                bubble.classList.remove('show');
+            }, 2800);
+        };
+
+        // 视图切换
+        window.switchView = function(viewId, navElement) {
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            navElement.classList.add('active');
+        };
+
+        // 字体调节
+        const fontSlider = document.getElementById('font-slider');
+        const fontValue = document.getElementById('font-value');
+        fontSlider.addEventListener('input', function() {
+            const size = this.value;
+            fontValue.textContent = size;
+            document.documentElement.style.setProperty('--note-font-size', size + 'px');
+        });
+
+        // 主题切换
+        window.setTheme = function(btn, start, end, textColor) {
+            document.documentElement.style.setProperty('--note-color-start', start);
+            document.documentElement.style.setProperty('--note-color-end', end);
+            document.documentElement.style.setProperty('--text-color', textColor);
+            document.querySelectorAll('.color-btn').forEach(el => el.classList.remove('active'));
+            btn.classList.add('active');
+        };
+
+        // 模态框打开与关闭
+        window.openModal = function(noteId) {
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modal-content');
+            const sourceWrapper = document.getElementById(noteId).parentElement;
+            modalContent.innerHTML = sourceWrapper.innerHTML;
+            const badge = modalContent.querySelector('.badge-current');
+            if(badge) badge.style.display = 'none';
+            modal.classList.add('show');
+        };
+
+        window.closeModal = function() {
+            document.getElementById('modal').classList.remove('show');
+        };
+
+        // 初始问候
+        setTimeout(() => {
+            const bubble = document.getElementById('garfield-bubble');
+            bubble.textContent = "主人，作业安排好啦！";
+            bubble.classList.add('show');
+            setTimeout(() => bubble.classList.remove('show'), 3000);
+        }, 800);
+        
+        // 点击背景关闭
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if(e.target === this) closeModal();
+        });
+    })();
+</script>
+</body>
+</html>
